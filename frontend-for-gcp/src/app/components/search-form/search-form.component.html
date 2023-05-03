@@ -1,0 +1,781 @@
+<div class="par-div">
+  <div class="container mt-sm-4" id="container">
+    <!-- <p>Form Value: {{ searchForm.controls['keyword'].value  }}</p> -->
+    <div class="search-div pb-5">
+      <div class="text-center">
+        <div class="h1 pt-5 pb-3">Event Search</div>
+      </div>
+      <div class="search-hr border-top border-white mx-4"></div>
+      <div class="mt-3 px-4 pb-4">
+        <form [formGroup]="searchForm" ngNativeValidate>
+          <div class="form-group">
+            <label for="inputKeyword" class="xrequired">Keyword</label>
+            <input
+              matInput
+              class="form-control"
+              id="inputKeyword"
+              [matAutocomplete]="auto"
+              formControlName="keyword"
+              required
+            />
+            <mat-autocomplete
+              [panelWidth]="400"
+              #auto="matAutocomplete"
+              (optionSelected)="onSelected()"
+              [displayWith]="displayWith"
+            >
+              <mat-option *ngIf="isLoading" class="is-loading">
+                <div
+                  class="spinner-border spinner-border-sm"
+                  role="status"
+                  style="
+                    color: #8280c4;
+                    width: 1.5rem;
+                    height: 1.5rem;
+                    border-width: 0.2rem;
+                  "
+                >
+                  <span class="sr-only">Loading...</span>
+                </div>
+              </mat-option>
+
+              <ng-container *ngIf="!isLoading">
+                <mat-option
+                  *ngFor="let movie of filteredMovies"
+                  [value]="movie"
+                >
+                  <span
+                    ><b>{{ movie.name }}</b></span
+                  >
+                </mat-option>
+              </ng-container>
+            </mat-autocomplete>
+          </div>
+          <div class="row">
+            <div class="form-group col-md-6">
+              <label for="inputCity">Distance</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="distance"
+                id="inputCity"
+                value="10"
+              />
+            </div>
+            <div class="form-group col-md-5 col-9">
+              <label for="validationDefault04" class="xrequired"
+                >Category</label
+              >
+              <select
+                class="form-control"
+                id="validationDefault04"
+                formControlName="category"
+                required
+              >
+                <option selected value="Default">Default</option>
+                <option value="Music">Music</option>
+                <option value="Sports">Sports</option>
+                <option value="Arts & Theatre">Arts & Theatre</option>
+                <option value="Film">Film</option>
+                <option value="Miscellaneous">Miscellaneous</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="inputLocation" class="xrequired">Location</label>
+            <input
+              #locationInput
+              type="text"
+              class="form-control"
+              id="inputLocation"
+              required
+              formControlName="location"
+            />
+          </div>
+
+          <div class="form-group">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="gridCheck"
+                (click)="toggleInput()"
+              />
+              <label class="form-check-label" for="gridCheck">
+                Auto-detect your location
+              </label>
+            </div>
+          </div>
+          <div class="text-center">
+            <button
+              type="submit"
+              class="btn btn-danger mx-2"
+              (click)="searchEvent()"
+            >
+              SUBMIT
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary mx-2"
+              (click)="clearAll()"
+            >
+              CLEAR
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" [hidden]="!isSubmitted" id="events-table-div">
+    <!-- table result -->
+    <div
+      *ngIf="this.eventsData && this.eventsData.message"
+      class="table-responsive table-div"
+      [hidden]="!(resultsDisplay && !detailsDisplay)"
+    >
+      <table
+        class="table t-border text-white table-striped table-dark table-rounded table-borderless mx-auto"
+      >
+        <thead>
+          <tr class="text-center">
+            <th>Date/Time</th>
+            <th>Icon</th>
+            <th>Event</th>
+            <th>Genre</th>
+            <th>Venue</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let x of this.eventsData.data; let i = index"
+            class="text-center"
+            (click)="showDetails(x)"
+            style="cursor: pointer"
+          >
+            <th>{{ x.localDate }}<br />{{ x.localTime }}</th>
+            <td><img [src]="x.url" alt="" class="table-img" /></td>
+            <td>{{ x.name }}</td>
+            <td>{{ x.segment_name }}</td>
+            <td>{{ x.venues_name }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- table no result -->
+    <div
+      *ngIf="this.eventsData && !this.eventsData.message"
+      [hidden]="!(resultsDisplay && !detailsDisplay)"
+      class="noresult-div col-9 bg-white text-danger border rounded-pill text-center mx-auto"
+    >
+      No results available
+    </div>
+    <!-- result detail -->
+    <div
+      [hidden]="!detailsDisplay"
+      class="text-center mx-auto search-div rounded-0 detail-div"
+    >
+      <div class="pl-2 pt-2">
+        <div style="display: flex; align-items: center">
+          <span
+            (click)="goBack()"
+            class="material-icons"
+            style="font-size: 15px; cursor: pointer"
+          >
+            arrow_back_ios_new
+          </span>
+          <span
+            (click)="goBack()"
+            style="text-decoration: underline; cursor: pointer"
+            >Back</span
+          >
+          <!-- <span
+          ><img
+            src="../../../assets/arrow_back.svg"
+            alt="My Happy SVG"
+          /> </span
+        >Back -->
+        </div>
+      </div>
+      <div
+        *ngIf="this.checkedEvent"
+        class="d-flex flex-wrap align-items-center justify-content-center py-4"
+      >
+        <span class="event-title mb-2 pr-2">
+          {{ this.checkedEvent.name }}
+        </span>
+
+        <span
+          *ngIf="!isFav"
+          class="white-heart-icon material-icons"
+          (click)="makeFav()"
+        >
+          favorite_border
+        </span>
+
+        <span
+          *ngIf="isFav"
+          class="red-heart-icon material-icons"
+          (click)="makeFav()"
+        >
+          favorite
+        </span>
+      </div>
+
+      <!-- backgroundColor="primary"
+    color="primary" -->
+      <mat-tab-group
+        mat-align-tabs="center"
+        mat-stretch-tabs="false"
+        backgroundColor="primary"
+      >
+        <mat-tab label="Events">
+          <div class="pb-3 pt-3" class="overflow-hidden">
+            <div *ngIf="checkedEvent" class="row">
+              <div class="col-sm-6 pt-5">
+                <div *ngIf="checkedEvent.date">
+                  <h5 class="artist-title">Date</h5>
+                  <p>{{ this.checkedEvent.date }}</p>
+                </div>
+                <div *ngIf="checkedEvent.team">
+                  <h5 class="artist-title">Artist/Team</h5>
+                  <p>{{ this.checkedEvent.team }}</p>
+                </div>
+                <div *ngIf="checkedEvent.venue">
+                  <h5 class="artist-title">Venue</h5>
+                  <p>{{ this.checkedEvent.venue }}</p>
+                </div>
+                <div *ngIf="checkedEvent.genres">
+                  <h5 class="artist-title">Genres</h5>
+                  <p>{{ this.checkedEvent.genres }}</p>
+                </div>
+                <div *ngIf="checkedEvent.price_range">
+                  <h5 class="artist-title">Price Ranges</h5>
+                  <p>{{ this.checkedEvent.price_range }}</p>
+                </div>
+                <div *ngIf="checkedEvent.status">
+                  <h5 class="artist-title mb-0">Ticket Status</h5>
+                  <p *ngIf="checkedEvent.status == 'onsale'">
+                    <button class="status" style="background-color: green">
+                      On Sale
+                    </button>
+                  </p>
+                  <p *ngIf="checkedEvent.status == 'offsale'">
+                    <button class="status" style="background-color: red">
+                      Off Sale
+                    </button>
+                  </p>
+                  <p *ngIf="checkedEvent.status == 'cancelled'">
+                    <button class="status" style="background-color: black">
+                      Cancelled
+                    </button>
+                  </p>
+                  <p *ngIf="checkedEvent.status == 'postponed'">
+                    <button class="status" style="background-color: orange">
+                      Postponed
+                    </button>
+                  </p>
+                  <p *ngIf="checkedEvent.status == 'rescheduled'">
+                    <button class="status" style="background-color: orange">
+                      Rescheduled
+                    </button>
+                  </p>
+                </div>
+                <div *ngIf="checkedEvent.buyTicketAt">
+                  <h5 class="artist-title">Buy Ticket At</h5>
+                  <a
+                    style="text-decoration: underline"
+                    [href]="this.checkedEvent.buyTicketAt"
+                    target="_blank"
+                    >Ticketmaster</a
+                  >
+                  <!-- <p>{{this.checkedEvent.buyTicketAt}}</p> -->
+                </div>
+              </div>
+              <div
+                class="col-sm-6 col-9 align-self-center mx-auto"
+                *ngIf="this.checkedEvent.seatMap"
+              >
+                <img
+                  [src]="this.checkedEvent.seatMap"
+                  class="img-fluid w-auto"
+                  alt="seatMap"
+                  style="margin-top: 1rem"
+                />
+              </div>
+            </div>
+            <div class="row mt-4 mb-4">
+              <div class="col text-center">
+                Share on:
+                <a
+                  id="twitter_link"
+                  class="m-0 p-0 ml-2 d-inline-flex btn btn-twitter btn-cus"
+                  [href]="twitterLink"
+                  target="_blank"
+                  data-size="large"
+                >
+                  <i class="m-0 p-0 fa fa-2x fa-twitter"></i>
+                </a>
+                <a
+                  id="facebook_link"
+                  target="_blank"
+                  [href]="facebookLink"
+                  class="m-0 mx-1 p-0 d-inline-flex btn btn-cus btn-facebook"
+                >
+                  <i
+                    class="m-0 p-0 fa fa-2x fa-facebook-square"
+                    aria-hidden="true"
+                  >
+                  </i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+        <mat-tab label="Artist/Teams">
+          <div
+            [hidden]="!musicRelated"
+            *ngIf="ArtistsDetail && ArtistsDetail.length > 0"
+            class="pb-3 overflow-hidden pt-4 "
+          >
+            <div
+              id="myCarousel"
+              class="carousel slide"
+              data-ride="carousel"
+              data-pause="hover"
+              
+            >
+              <div class="carousel-inner ">
+                <div
+                  class="carousel-item "
+                  data-interval="3000"
+                  *ngFor="
+                    let artist of ArtistsDetail;
+                    let i = index;
+                    let isFirst = first
+                  "
+                  [ngClass]="{ active: isFirst }"
+                >
+                  <div class="artist-div">
+                    <div class="row px-3">
+                      <div class="col-sm align-self-center" *ngIf="artist && artist.img">
+                        <img
+                          [src]="artist.img"
+                          alt="11"
+                          class="rounded-circle mw-100 px-3 px-sm-0"
+                          
+                        />
+                        <!-- style="width: 9rem" -->
+                        <h5 class="artist-name mt-2 mb-sm-0">
+                          {{ artist.name }}
+                        </h5>
+                      </div>
+                      <div class="col-sm align-self-center" *ngIf="artist && artist.popularity">
+                        <div class="mb-3">
+                          <h5 class="artist-title">Popularity</h5>
+                        </div>
+                        <!-- <mat-card class="example-card">
+                        <mat-card-content> -->
+                        <div class="mb-2 mb-sm-0" style="position: relative">
+                          <mat-progress-spinner
+                            class="example-margin"
+                            color="warn"
+                            mode="determinate"
+                            [value]="artist.popularity"
+                            diameter="40"
+                            style="margin: 0 auto"
+                          >
+                          </mat-progress-spinner>
+                          <div *ngIf="artist.popularity != 100" class="spinDes">
+                            {{ artist.popularity }}
+                          </div>
+                          <div
+                            *ngIf="artist.popularity == 100"
+                            class="spinDes100"
+                          >
+                            {{ artist.popularity }}
+                          </div>
+                        </div>
+                        <!-- </mat-card-content>
+                  </mat-card> -->
+                        <!-- <p>{{artist.popularity}}</p> -->
+                      </div>
+                      <div class="col-sm align-self-center" *ngIf="artist && artist.followers">
+                        <div class="mb-3">
+                          <h5 class="artist-title">Followers</h5>
+                        </div>
+                        <div class="" style="height: 43px">
+                          {{ artist.followers }}
+                        </div>
+                      </div>
+                      <div class="col-sm align-self-center" *ngIf="artist && artist.spotify_link">
+                        <div class="mb-3">
+                          <h5 class="artist-title">Spotify Link</h5>
+                        </div>
+                        <div style="height: 43px">
+                          <a
+                            [href]="artist.spotify_link"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            ><i class="fa fa-spotify spotify-icon"></i
+                          ></a>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      class="row pt-4 pb-2"
+                      *ngIf="artist"
+                      style="padding-left:14px; font-size:17px"
+                    >
+                      <div *ngIf="artist.name" class="col-sm text-left detail-title-color">
+                        Album featuring {{ artist.name }}
+                      </div>
+                      <div *ngIf="!artist.name" class="col-sm text-left detail-title-color">
+                        Album featuring without artist name
+                      </div>
+                    </div>
+                    <div
+                      class="row pb-4 pt-3"
+                      *ngIf="artist && artist.albumMsg"
+                    >
+                      <div class="col-sm">
+                        <img
+                          class="img-div"
+                          [src]="artist.albums[0]"
+                          alt="albums0"
+                        />
+                      </div>
+                      <div class="col-sm">
+                        <img
+                          class="img-div"
+                          [src]="artist.albums[1]"
+                          alt="albums1"
+                        />
+                      </div>
+                      <div class="col-sm">
+                        <img
+                          class="img-div"
+                          [src]="artist.albums[2]"
+                          alt="albums2"
+                        />
+                      </div>
+                    </div>
+                    <div
+                      class="row pb-4 pt-3"
+                      *ngIf="artist && !artist.albumMsg"
+                    >
+                      
+
+                      <div
+                        class="noMusic-div col-7 bg-white text-danger border rounded-pill text-center mx-auto noMusic"
+                      >
+                        no related albums
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <a
+              *ngIf="ArtistsDetail && ArtistsDetail.length > 1"
+              class="carousel-control-prev"
+              href="#myCarousel"
+              role="button"
+              data-slide="prev"
+            >
+
+              <div class="left-arrow"></div>
+              <span class="sr-only">Previous</span>
+            </a>
+            <a
+              *ngIf="ArtistsDetail && ArtistsDetail.length > 1"
+              class="carousel-control-next"
+              href="#myCarousel"
+              role="button"
+              data-slide="next"
+            >
+              <!-- <span class="carousel-control-next-icon" aria-hidden="true"></span> -->
+              <!-- <span class="material-icons" style="color:black">
+              navigate_next
+            </span> -->
+              <div class="right-arrow"></div>
+              <span class="sr-only">Next</span>
+            </a>
+          </div>
+          <div [hidden]="musicRelated">
+            <div
+              class="noMusic-div col-7 bg-white text-danger border rounded-pill text-center mx-auto noMusic"
+            >
+              No music related artist details to show
+            </div>
+          </div>
+          <div [hidden]="!musicRelated"
+            *ngIf="ArtistsDetail && ArtistsDetail.length == 0"
+          >
+            <div
+              class="noMusic-div col-7 bg-white text-danger border rounded-pill text-center mx-auto noMusic"
+            >
+              No valid Artists data
+            </div>
+          </div>
+        </mat-tab>
+        <mat-tab label="Venue">
+          <div class="pb-3 overflow-hidden">
+            <div class="row pt-4">
+              <div class="col-sm">
+                <div class="col-sm" *ngIf="venueData && venueData.name">
+                  <h5 class="artist-title">Name</h5>
+                  <p>{{ venueData.name }}</p>
+                </div>
+                <div
+                  class="col-sm"
+                  *ngIf="venueData && (venueData.address || venueData.city)"
+                >
+                  <h5 class="artist-title">Address</h5>
+                  <p>{{ venueData.address }}, {{ venueData.city }}</p>
+                </div>
+                <div class="col-sm" *ngIf="venueData && venueData.phoneNumber">
+                  <h5 class="artist-title">Phone Number</h5>
+                  <p>{{ venueData.phoneNumber }}</p>
+                </div>
+              </div>
+
+              <div class="col-sm">
+                <div
+                  class="col-sm mb-3 text-center"
+                  id="module1"
+                  *ngIf="venueData && venueData.openHours"
+                >
+                  <h5 class="artist-title">Open Hours</h5>
+                  <p
+                    class="collapse custom-collapse mb-0"
+                    id="collapseExample1"
+                    aria-expanded="false"
+                  >
+                    {{ venueData.openHours }}
+                  </p>
+                  <a
+                    role="button"
+                    class="show-link collapsed d-flex align-items-center justify-content-center"
+                    data-toggle="collapse"
+                    href="#collapseExample1"
+                    aria-expanded="false"
+                    aria-controls="collapseExample1"
+                  >
+                    <span class="text-span"></span>
+                    <span
+                      class="icon-span"
+                      style="text-decoration: none"
+                    ></span>
+                  </a>
+                </div>
+                <div
+                  class="col-sm mb-3 text-center"
+                  id="module2"
+                  *ngIf="venueData && venueData.generalRule"
+                >
+                  <h5 class="artist-title">General Rule</h5>
+                  <p
+                    class="collapse custom-collapse mb-0"
+                    id="collapseExample2"
+                    aria-expanded="false"
+                  >
+                    {{ venueData.generalRule }}
+                  </p>
+                  <a
+                    role="button"
+                    class="show-link collapsed d-flex align-items-center justify-content-center"
+                    data-toggle="collapse"
+                    href="#collapseExample2"
+                    aria-expanded="false"
+                    aria-controls="collapseExample2"
+                  >
+                    <span class="text-span"></span>
+                    <span
+                      class="icon-span"
+                      style="text-decoration: none"
+                    ></span>
+                  </a>
+                </div>
+                <div
+                  class="col-sm mb-3 text-center"
+                  id="module3"
+                  *ngIf="venueData && venueData.childRule"
+                >
+                  <h5 class="artist-title">Child Rule</h5>
+                  <p
+                    class="collapse custom-collapse mb-0"
+                    id="collapseExample3"
+                    aria-expanded="false"
+                  >
+                    {{ venueData.childRule }}
+                  </p>
+                  <a
+                    role="button"
+                    class="show-link collapsed d-flex align-items-center justify-content-center"
+                    data-toggle="collapse"
+                    href="#collapseExample3"
+                    aria-expanded="false"
+                    aria-controls="collapseExample3"
+                  >
+                    <span class="text-span"></span>
+                    <span
+                      class="icon-span"
+                      style="text-decoration: none"
+                    ></span>
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="row mt-3 mb-3">
+              <div class="col">
+                <button
+                  class="btn btn-danger rounded"
+                  data-toggle="modal"
+                  data-target="#myModal"
+                >
+                  Show venue on Google map
+                </button>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+    <!-- google map modal section modal-dialog-centered -->
+    <div class="modal modal-div fade" tabindex="-1" id="myModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Event Venue</h5>
+          </div>
+          <div class="modal-body">
+            <div class="my-google-map" *ngIf="venueData">
+              <google-map
+                *ngIf="
+                  venueData &&
+                  venueData.lat &&
+                  venueData.lng &&
+                  venueData.message
+                "
+                [options]="{
+                  center: { lat: this.venueData.lat, lng: this.venueData.lng },
+                  zoom: 14
+                }"
+                width="100%"
+                height="366px"
+              >
+                <map-marker
+                  [position]="{
+                    lat: this.venueData.lat,
+                    lng: this.venueData.lng
+                  }"
+                ></map-marker>
+              </google-map>
+              <div
+                *ngIf="
+                  !venueData ||
+                  (venueData &&
+                    !venueData.lat &&
+                    !venueData.lng &&
+                    !venueData.message)
+                "
+              >
+                no valid lat and lng
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-dark mr-auto" data-dismiss="modal">
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- <div class="row">
+  <div class="col-sm" *ngIf="ArtistsDetail[0]">
+    <img [src]="this.ArtistsDetail[0].img" alt="11" class="rounded-circle" style="width:50%">
+    <h3>{{this.ArtistsDetail[0].name}}</h3>
+  </div>
+  <div class="col-sm">
+    <h3>Popularity</h3>
+    <p>67</p>
+  </div>
+  <div class="col-sm">
+    <h3>Followers</h3>
+    <p>717,000</p>
+  </div>
+  <div class="col-sm">
+    <h3>Spotify Link</h3>
+    <p>photo</p>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm text-left">Album featuring Brandi Carlile</div>
+</div>
+<div class="row">
+  <div class="col-sm">Photo 1</div>
+  <div class="col-sm">Photo 2</div>
+  <div class="col-sm">Photo 3</div>
+</div> -->
+<!-- <div class="container" id="events-table-div">
+  <div class="table-responsive">
+    <table
+      class="table text-white table-striped table-dark table-borderless table-rounded mx-auto"
+    >
+      <thead>
+        <tr class="text-center">
+          <th>Date</th>
+          <th>Icon</th>
+          <th>Event</th>
+          <th>Genre</th>
+          <th>Venue</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let x of testData" class="text-center">
+          
+          <td>{{ x.name }}</td>
+          <td>{{ x.classifications[0].segment.name }}</td>
+          <td>{{ x.venues[0].name }}</td>
+          <th class="text-wrap">
+            {{ x.dates.start.localDate }}<br>{{ x.dates.start.localTime }}
+          </th>
+          <td>{{ x.images[0].url }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div> -->
+
+<!-- <form [formGroup]="searchForm1">
+  <mat-form-field class="example-full-width">
+    <input
+      matInput
+      [matAutocomplete]="auto"
+      formControlName="searchMoviesCtrl"
+    />
+
+    <mat-autocomplete
+      [panelWidth]="400"
+      #auto="matAutocomplete"
+      (optionSelected)="onSelected()"
+      [displayWith]="displayWith"
+    >
+      <mat-option *ngIf="isLoading" class="is-loading">Loading...</mat-option>
+      <ng-container *ngIf="!isLoading">
+        <mat-option *ngFor="let movie of filteredMovies" [value]="movie">
+          <span
+            ><b>{{ movie.Title }}</b></span
+          >
+        </mat-option>
+      </ng-container>
+    </mat-autocomplete>
+  </mat-form-field>
+</form> -->
