@@ -1,5 +1,6 @@
 # EventsRetrieve
 ## For Website
+<div align="center">
 <img width="1245" alt="image" src="https://github.com/Caveira-coder/TicketsRetrieve/assets/78458078/e7d860b4-427e-47fe-a868-27c318492410">
 <img width="1228" alt="image" src="https://github.com/Caveira-coder/TicketsRetrieve/assets/78458078/b825e509-49a3-45b1-ad8e-0490718f85d1">
 <img width="796" alt="image" src="https://github.com/Caveira-coder/TicketsRetrieve/assets/78458078/3a95900f-9843-4d1b-80ab-484404ee50f6">
@@ -20,3 +21,4 @@
 <img width="373" alt="image" src="https://github.com/Caveira-coder/TicketsRetrieve/assets/78458078/b60e9a8b-4c65-42f5-b062-c645523682af">
 <img width="357" alt="image" src="https://github.com/Caveira-coder/TicketsRetrieve/assets/78458078/a2e8e43f-27e9-4cae-a1a4-cb4f979f7eab">
 <img width="359" alt="image" src="https://github.com/Caveira-coder/TicketsRetrieve/assets/78458078/b3791986-853b-414e-ba16-8e2f9b31de36">
+</div>
